@@ -27,6 +27,8 @@ defmodule Cavalree.MixProject do
   def project() do
     [
       app: :cavalree,
+      deps: [],
+      deps_path: "dep",
       elixir: "~> 1.20",
       elixirc_options: [warnings_as_errors: true],
       start_permanent: Mix.env() == :prod,
