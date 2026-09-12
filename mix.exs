@@ -28,6 +28,7 @@ defmodule Cavalree.MixProject do
     [
       app: :cavalree,
       elixir: "~> 1.20",
+      elixirc_options: [warnings_as_errors: true],
       start_permanent: Mix.env() == :prod,
       version: "0.1.0"
     ]
