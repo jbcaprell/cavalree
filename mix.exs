@@ -31,7 +31,8 @@ defmodule Cavalree.MixProject do
           "boundary.ex_doc_groups",
           &write_moduledoc_group/1,
           "format .boundary.exs"
-        ]
+        ],
+        credo: "credo --config-name default"
       ],
       app: :cavalree,
       boundary: [default: [type: :strict]],
