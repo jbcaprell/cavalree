@@ -15,6 +15,12 @@ defmodule Masonree.Manifest do
   refused at a block’s compile costs its author a recompile; the same name
   admitted costs a client a page.
 
+  The report is a list and never a raise, and it holds every fault rather than
+  the first. Finding all of them costs one pass over one struct, and an author
+  handed four faults fixes them in one recompile rather than four. What a
+  non-empty list means is the caller’s to decide: this module names what is
+  wrong and does nothing about it.
+
   Only `attributes` describes anything a node stores. A node’s `attributes` hold
   values whose meaning is fixed here; the rest is code. `label` and `category`
   are display and may be reworded freely; an attribute cannot, because changing
@@ -128,6 +134,56 @@ defmodule Masonree.Manifest do
     name
     |> String.split("/")
     |> take_namespace()
+  end
+
+  @doc """
+  Returns every rejection `manifest` carries, sorted, or `[]` where well formed.
+
+  Every check runs and every fault is reported: a manifest with four faults
+  names four, and an author reading a build failure fixes them in one pass
+  rather than one compile each. One fault is still one rejection — a malformed
+  type is never reported a second time as the default judged against it — and
+  the report is sorted, so it is the same list whatever order the attribute map
+  iterates in, which above 32 keys is not the order it was written in.
+
+  Sorting is by term order, which compares tuples by size before contents, so
+  every block-level problem precedes every attribute-level one and a reader
+  meets this manifest is wrong before this attribute is wrong. That falls out of
+  tuple sizing rather than being arranged, and it is the order worth having.
+
+  Only what a block can know about itself is checked. Whether a name is unique,
+  or collides with another block’s — anything needing a second block to answer —
+  belongs to whatever holds the blocks, not here.
+
+  ## Examples
+
+      iex> validate(%Manifest{name: "test/example", version: 1})
+      []
+
+      iex> validate(%Manifest{name: "example", version: 0})
+      [{:bad_version, "example"}, {:unnamespaced_name, "example"}]
+
+  """
+  @doc since: "0.5.0"
+  @spec validate(t()) :: problems()
+  def validate(manifest) when is_struct(manifest, __MODULE__) do
+    reports = [
+      validate_defaults(manifest),
+      validate_duplicates(manifest),
+      validate_enums(manifest),
+      validate_format(manifest),
+      validate_keys(manifest),
+      validate_name(manifest),
+      validate_requiredness(manifest),
+      validate_roles(manifest),
+      validate_scalars(manifest),
+      validate_types(manifest),
+      validate_version(manifest)
+    ]
+
+    reports
+    |> Enum.concat()
+    |> Enum.sort()
   end
 
   @doc """
