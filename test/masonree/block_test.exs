@@ -11,9 +11,11 @@ defmodule Masonree.BlockTest do
   doctest Block, import: true
 
   describe "Block" do
-    test "asks every block for a manifest" do
-      assert Block.behaviour_info(:callbacks) == [manifest: 0]
-      assert Block.behaviour_info(:optional_callbacks) == []
+    test "asks every block for a manifest and only some for markup" do
+      callbacks = Block.behaviour_info(:callbacks)
+
+      assert Enum.sort(callbacks) == [manifest: 0, render: 1]
+      assert Block.behaviour_info(:optional_callbacks) == [render: 1]
     end
   end
 end
