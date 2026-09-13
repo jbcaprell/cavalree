@@ -70,6 +70,7 @@ defmodule Masonree.Manifest do
           {:bad_attribute_type, name(), key()}
           | {:bad_key_format, name(), key()}
           | {:bad_version, name()}
+          | {:duplicate_enum_values, name(), key()}
           | {:empty_enum, name(), key()}
           | {:non_string_keys, name()}
           | {:unnamespaced_name, name()}
@@ -122,6 +123,36 @@ defmodule Masonree.Manifest do
     name
     |> String.split("/")
     |> take_namespace()
+  end
+
+  @doc """
+  Returns a rejection for each of `manifest`’s enums that repeats a value.
+
+  An enum’s values are a set an author writes as a list, and a repeated entry is
+  always a mistake rather than a wider set: nothing a node can hold
+  distinguishes an enum from the same enum with a value repeated, so the
+  repetition can only ever mislead a reader about how many choices there are.
+  Repetition is judged strictly — `1` and `1.0` are two entries, not one
+  repeated — and the copies need not be adjacent to be found.
+
+  ## Example
+
+      iex> manifest = %Manifest{
+      ...>   attributes: %{"tag" => %Attribute{type: {:enum, ["h2", "h2"]}}},
+      ...>   name: "test/example",
+      ...>   version: 1
+      ...> }
+      iex>
+      iex> validate_duplicates(manifest)
+      [{:duplicate_enum_values, "test/example", "tag"}]
+
+  """
+  @doc since: "0.5.0"
+  @spec validate_duplicates(t()) :: problems()
+  def validate_duplicates(%__MODULE__{attributes: attributes, name: name}) do
+    attributes
+    |> take_attributes(&duplicate_enum_values?/1)
+    |> report_attributes(name, :duplicate_enum_values)
   end
 
   @doc """
@@ -325,6 +356,14 @@ defmodule Masonree.Manifest do
   @spec bad_key_format?(term()) :: boolean()
   defp bad_key_format?(key) when is_binary(key), do: not Regex.match?(@key, key)
   defp bad_key_format?(_key), do: false
+
+  @spec duplicate_enum_values?(Attribute.t()) :: boolean()
+  defp duplicate_enum_values?(%Attribute{type: {:enum, values}})
+       when is_list(values) do
+    values != Enum.uniq(values)
+  end
+
+  defp duplicate_enum_values?(_attribute), do: false
 
   @spec empty_enum?(Attribute.t()) :: boolean()
   defp empty_enum?(%Attribute{type: {:enum, []}}), do: true
