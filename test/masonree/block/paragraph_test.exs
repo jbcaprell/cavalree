@@ -7,6 +7,25 @@ defmodule Masonree.Block.ParagraphTest do
   alias Masonree
 
   alias Masonree.Block
+  alias Masonree.Manifest
+
+  alias Manifest.Attribute
 
   doctest Block.Paragraph, import: true
+
+  describe "manifest/0" do
+    import Block.Paragraph, only: [manifest: 0]
+
+    test "returns the declaration whole" do
+      assert manifest() == %Manifest{
+               attributes: %{
+                 "content" => %Attribute{default: "", type: :string}
+               },
+               category: "text",
+               label: "Paragraph",
+               name: "core/paragraph",
+               version: 1
+             }
+    end
+  end
 end
