@@ -70,13 +70,13 @@
   ex_doc: {
     :hex,
     :ex_doc,
-    "0.40.3",
-    "4a972ffe64bc07dc605af487e98fc19b72a4185f55ca031b94c0552d6071c1d9",
+    "0.40.4",
+    "66f2e42bf588594d5a8aab31cad87f2ddad09d0da1b1a2f379340ec2c2e497cb",
     [:mix],
     [
       {
         :earmark_parser,
-        "~> 1.4.44",
+        "~> 1.4.46",
         [hex: :earmark_parser, repo: "hexpm", optional: false]
       },
       {:makeup_c, ">= 0.1.0", hex: :makeup_c, repo: "hexpm", optional: true},
@@ -97,7 +97,7 @@
       }
     ],
     "hexpm",
-    "2756e357742fecd9749b489b85d67c9ce99c465f2e75728d9e6dc8d704b973de"
+    "6222b9e423d76584ee34df2c82a5ed72c2d53dc153f7f483ad28b378694186cc"
   },
   file_system: {
     :hex,
