@@ -78,7 +78,7 @@ defmodule Cavalree.MixProject do
       name: "Cavalree",
       start_permanent: env == :prod,
       test_coverage: [ignore_modules: [~r/\AMasonreeBench(\.|\z)/]],
-      version: "0.3.0"
+      version: "0.4.0"
     ]
   end
 
