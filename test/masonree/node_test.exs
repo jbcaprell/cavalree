@@ -26,6 +26,16 @@ defmodule Masonree.NodeTest do
     [node | descendants]
   end
 
+  @spec scrub(Node.t()) :: map()
+  defp scrub(node) do
+    children = Enum.map(node.children, &scrub/1)
+
+    node
+    |> Map.from_struct()
+    |> Map.drop([:id])
+    |> Map.put(:children, children)
+  end
+
   describe "%Node{}" do
     test "defaults to no attributes, children or preset" do
       node = %Node{id: "n_Kx2c80c5vMx_", type: "test/example", version: 1}
@@ -176,6 +186,69 @@ defmodule Masonree.NodeTest do
 
     test "treats a version below 1 as absent" do
       assert from_map!(%{"type" => "test/example", "version" => 0}).version == 1
+    end
+  end
+
+  describe "from_map/1" do
+    import Node, only: [from_map: 1]
+
+    test "reads a page-sized tree whole, as the raising reader does" do
+      serialized = build_bare(6)
+
+      {:ok, node} = from_map(serialized)
+      node! = Node.from_map!(serialized)
+      nodes = flatten(node)
+
+      assert length(nodes) == 364
+      assert scrub(node) == scrub(node!)
+    end
+
+    test "reads a well-formed envelope" do
+      serialized = %{
+        "attributes" => %{"level" => 3},
+        "children" => [%{"id" => "n_3LiBstWPCLMC", "type" => "test/child"}],
+        "id" => "n_Fr5MmRIUVz2F",
+        "preset" => "wide",
+        "type" => "test/example",
+        "version" => 2
+      }
+
+      assert from_map(serialized) == {:ok, Node.from_map!(serialized)}
+    end
+
+    test "refuses a child at depth that is not an envelope" do
+      serialized = %{
+        "children" => [
+          %{
+            "children" => [%{"id" => "n_3LiBstWPCLMC"}],
+            "type" => "test/example"
+          }
+        ],
+        "type" => "test/example"
+      }
+
+      assert from_map(serialized) == :error
+    end
+
+    test "refuses a map with no type" do
+      assert from_map(%{"id" => "n_wJEY6cpelYvh"}) == :error
+    end
+
+    test "refuses a type that is not a string" do
+      assert from_map(%{"type" => 42}) == :error
+    end
+
+    test "tolerates a malformed field, as the raising reader does" do
+      serialized = %{
+        "children" => "none",
+        "id" => 123,
+        "type" => "test/example"
+      }
+
+      {:ok, node} = from_map(serialized)
+
+      assert node.children == []
+      assert node.id != 123
     end
   end
 
