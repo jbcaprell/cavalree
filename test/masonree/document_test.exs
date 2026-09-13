@@ -7,6 +7,13 @@ defmodule Masonree.DocumentTest do
   alias Masonree
 
   alias Masonree.Document
+  alias Masonree.Node
 
   doctest Document, import: true
+
+  describe "%Document{}" do
+    test "is an empty root and nothing else" do
+      assert Map.from_struct(%Document{}) == %{root: []}
+    end
+  end
 end
