@@ -17,6 +17,11 @@ defmodule Masonree.Type.String do
 
   alias Masonree.Type
 
+  # @impl Type
+  @doc "Returns whether `:string` may be declared with `payload`."
+  @spec declarable?(Type.payload()) :: boolean()
+  def declarable?(payload), do: is_nil(payload)
+
   @impl Type
   def admits?(_payload, value), do: is_binary(value)
 end
