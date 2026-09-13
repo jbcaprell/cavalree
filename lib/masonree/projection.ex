@@ -92,8 +92,8 @@ defmodule Masonree.Projection do
   @typedoc since: "0.3.0"
   @type rendered() :: [Block.rendered()]
 
-  @type html_attributes() :: Block.html_attributes()
-  @type manifest() :: Manifest.t()
+  @typep html_attributes() :: Block.html_attributes()
+  @typep manifest() :: Manifest.t()
 
   @doc """
   Returns the markup `document` becomes under `blocks` in `mode`, with findings.
@@ -214,7 +214,9 @@ defmodule Masonree.Projection do
 
   @spec take_html_attributes(Node.t(), mode(), manifest()) :: html_attributes()
   defp take_html_attributes(node, :editor, manifest) do
-    Enum.sort([{"data-mnr-id", node.id} | take_annotation(node, manifest)])
+    annotation = take_annotation(node, manifest)
+
+    Enum.sort([{"data-mnr-id", node.id} | annotation])
   end
 
   defp take_html_attributes(node, :public, manifest) do
