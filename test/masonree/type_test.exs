@@ -10,6 +10,19 @@ defmodule Masonree.TypeTest do
 
   doctest Type, import: true
 
+  @spec member?(module()) :: boolean()
+  defp member?(module) do
+    Code.ensure_loaded?(module) and Type in take_behaviours(module)
+  end
+
+  @spec take_behaviours(module()) :: [module()]
+  defp take_behaviours(module) do
+    :attributes
+    |> module.__info__()
+    |> Keyword.get_values(:behaviour)
+    |> List.flatten()
+  end
+
   describe "Type" do
     test "the lattice asks one question, and every member must answer" do
       assert Type.behaviour_info(:callbacks) == [admits?: 2]
@@ -50,6 +63,25 @@ defmodule Masonree.TypeTest do
     test "returns true for a nil, whatever the type" do
       assert admits?(:boolean, nil)
       assert admits?(:bool, nil)
+    end
+  end
+
+  describe "list_tags/0" do
+    import Type, only: [list_tags: 0]
+
+    test "answers one tag for every member the library compiles, sorted" do
+      {:ok, modules} = :application.get_key(:cavalree, :modules)
+
+      tags =
+        for module <- modules, member?(module) do
+          module
+          |> Module.split()
+          |> List.last()
+          |> String.downcase()
+          |> String.to_existing_atom()
+        end
+
+      assert list_tags() == Enum.sort(tags)
     end
   end
 end
