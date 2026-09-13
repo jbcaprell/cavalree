@@ -14,6 +14,12 @@ defmodule Masonree.Type do
   The lattice is asked `admits?/2` with a type and a value; it resolves the type
   to a member and asks that member `c:admits?/2`, handing it the payload the
   type carried and the same value.
+
+  A `nil` payload is refused before any member is asked. A member reads
+  `{:boolean, nil}` exactly as it reads the bare `:boolean`, so no member can
+  tell the two apart, and every scalar type would quietly acquire a second
+  spelling. Resolution can still see the difference, so that is where a
+  `nil`-payload tuple stops being a type.
   """
   @moduledoc since: "0.3.0"
 
@@ -25,9 +31,9 @@ defmodule Masonree.Type do
   @typedoc since: "0.3.0"
   @type payload() :: term()
 
-  @typedoc "Represents a member of the lattice, as a declaration names it."
+  @typedoc "Represents a type, with the payload where its member takes one."
   @typedoc since: "0.3.0"
-  @type t() :: :boolean
+  @type t() :: :boolean | {:enum, [value()]}
 
   @typedoc "Represents the value a member is asked about."
   @typedoc since: "0.3.0"
@@ -37,7 +43,7 @@ defmodule Masonree.Type do
   @doc since: "0.3.0"
   @callback admits?(payload(), value()) :: boolean()
 
-  @modules %{boolean: Type.Boolean}
+  @modules %{boolean: Type.Boolean, enum: Type.Enum}
 
   @doc """
   Returns whether `type` may hold `value`.
@@ -51,6 +57,12 @@ defmodule Masonree.Type do
       true
 
       iex> admits?(:boolean, "true")
+      false
+
+      iex> admits?({:enum, ["dark", "light"]}, "dark")
+      true
+
+      iex> admits?({:boolean, nil}, true)
       false
 
       iex> admits?(:boolean, nil)
@@ -69,6 +81,15 @@ defmodule Masonree.Type do
   end
 
   @spec resolve(t()) :: :error | {module(), payload()}
+  defp resolve({_tag, nil}), do: :error
+
+  defp resolve({tag, payload}) when is_atom(tag) do
+    case Map.fetch(@modules, tag) do
+      {:ok, module} -> {module, payload}
+      :error -> :error
+    end
+  end
+
   defp resolve(type) when is_atom(type) do
     case Map.fetch(@modules, type) do
       {:ok, module} -> {module, nil}

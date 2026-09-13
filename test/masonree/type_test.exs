@@ -23,6 +23,15 @@ defmodule Masonree.TypeTest do
     test "puts the question to the member" do
       assert admits?(:boolean, true)
       refute admits?(:boolean, "true")
+
+      assert admits?({:enum, ["dark", "light"]}, "dark")
+      refute admits?({:enum, ["dark", "light"]}, "vermilion")
+    end
+
+    test "refuses a nil-payload tuple, which is not a type" do
+      refute admits?({:boolean, nil}, true)
+      refute admits?({:number, nil}, 3)
+      refute admits?({:string, nil}, "Hello, world!")
     end
 
     test "refuses a type the lattice does not hold" do
