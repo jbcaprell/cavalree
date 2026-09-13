@@ -77,6 +77,7 @@ defmodule Cavalree.MixProject do
       elixirc_paths: get_elixirc_path(env),
       name: "Cavalree",
       start_permanent: env == :prod,
+      test_coverage: [ignore_modules: [~r/\AMasonreeBench(\.|\z)/]],
       version: "0.3.0"
     ]
   end
