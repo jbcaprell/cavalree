@@ -8,6 +8,13 @@ defmodule Masonree.Manifest do
   to answer belongs elsewhere, which is what lets a manifest be checked at its
   own compile.
 
+  Judging a declaration is this module’s work too, and the two belong together
+  for one reason: every rule a manifest can be held to is a rule about the
+  manifest alone. Nothing here needs a second block, a stored page or a running
+  editor, so the judgment can run where the declaration is written. A name
+  refused at a block’s compile costs its author a recompile; the same name
+  admitted costs a client a page.
+
   Only `attributes` describes anything a node stores. A node’s `attributes` hold
   values whose meaning is fixed here; the rest is code. `label` and `category`
   are display and may be reworded freely; an attribute cannot, because changing
@@ -52,6 +59,10 @@ defmodule Masonree.Manifest do
   @typedoc since: "0.5.0"
   @type namespace() :: String.t()
 
+  @typedoc "Represents every rejection found."
+  @typedoc since: "0.5.0"
+  @type problems() :: [{:unnamespaced_name, name()}]
+
   @typedoc "Represents the manifest."
   @typedoc since: "0.3.0"
   @type t() :: %__MODULE__{
@@ -65,6 +76,8 @@ defmodule Masonree.Manifest do
   @typedoc "Represents the block’s version, a count of its migrations."
   @typedoc since: "0.3.0"
   @type version() :: pos_integer()
+
+  @name ~r"\A[a-z][a-z0-9-]*/[a-z][a-z0-9-]*\z"
 
   @doc """
   Returns the namespace of `name`, or `nil` where it carries none.
@@ -91,6 +104,42 @@ defmodule Masonree.Manifest do
     |> String.split("/")
     |> take_namespace()
   end
+
+  @doc """
+  Returns the rejection where `manifest`’s name is not a namespaced name.
+
+  A block’s name is two lowercase halves split by one `/` — a namespace and a
+  local name, each beginning with a letter and continuing in letters, digits and
+  hyphens. A trailing newline is refused: `"test/example\\n"` prints identically
+  to a legal name everywhere a name appears, and is not one.
+
+  The check is strict where `get_namespace/1` is tolerant: this judges a
+  declaration a person wrote, and the other reads whatever a stored `type`
+  string happens to hold. The strictness fixes a client’s namespace as lowercase
+  letters, digits and hyphens forever, and that cost is taken knowingly — a name
+  grammar loosened later admits names it once refused, where one tightened later
+  orphans names it once admitted.
+
+  ## Examples
+
+      iex> validate_name(%Manifest{name: "test/example", version: 1})
+      []
+
+      iex> validate_name(%Manifest{name: "Example", version: 1})
+      [{:unnamespaced_name, "Example"}]
+
+  """
+  @doc since: "0.5.0"
+  @spec validate_name(t()) :: problems()
+  def validate_name(%__MODULE__{name: name}) do
+    name
+    |> String.match?(@name)
+    |> report_name(name)
+  end
+
+  @spec report_name(boolean(), name()) :: problems()
+  defp report_name(false, name), do: [{:unnamespaced_name, name}]
+  defp report_name(true, _name), do: []
 
   @spec take_namespace([String.t()]) :: nil | namespace()
   defp take_namespace([namespace, local_name])
