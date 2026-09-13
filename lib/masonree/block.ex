@@ -44,7 +44,7 @@ defmodule Masonree.Block do
   @typedoc since: "0.3.0"
   @type assigns() :: %{
           __changed__: nil,
-          html_attributes: [{String.t(), String.t()}],
+          html_attributes: html_attributes(),
           inner_block: [slot()],
           node: Node.t()
         }
@@ -52,6 +52,10 @@ defmodule Masonree.Block do
   @typedoc "Represents the environment of the module being compiled."
   @typedoc since: "0.3.0"
   @type env() :: Macro.Env.t()
+
+  @typedoc "Represents the attributes a block splices into its root element."
+  @typedoc since: "0.3.0"
+  @type html_attributes() :: [{String.t(), String.t()}]
 
   @typedoc "Represents the code this module injects into a block."
   @typedoc since: "0.3.0"
