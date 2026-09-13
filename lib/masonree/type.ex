@@ -33,7 +33,7 @@ defmodule Masonree.Type do
 
   @typedoc "Represents a type, with the payload where its member takes one."
   @typedoc since: "0.3.0"
-  @type t() :: :boolean | {:enum, [value()]}
+  @type t() :: :boolean | :number | {:enum, [value()]}
 
   @typedoc "Represents the value a member is asked about."
   @typedoc since: "0.3.0"
@@ -43,7 +43,7 @@ defmodule Masonree.Type do
   @doc since: "0.3.0"
   @callback admits?(payload(), value()) :: boolean()
 
-  @modules %{boolean: Type.Boolean, enum: Type.Enum}
+  @modules %{boolean: Type.Boolean, enum: Type.Enum, number: Type.Number}
 
   @doc """
   Returns whether `type` may hold `value`.
