@@ -24,9 +24,10 @@ defmodule Masonree.TypeTest do
   end
 
   describe "Type" do
-    test "the lattice asks one question, and every member must answer" do
-      assert Type.behaviour_info(:callbacks) == [admits?: 2]
-      assert Type.behaviour_info(:optional_callbacks) == []
+    test "the lattice asks two questions, and every member must answer" do
+      callbacks = Type.behaviour_info(:callbacks)
+
+      assert Enum.sort(callbacks) == [admits?: 2, declarable?: 1]
     end
   end
 

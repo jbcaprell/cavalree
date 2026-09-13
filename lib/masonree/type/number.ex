@@ -8,11 +8,9 @@ defmodule Masonree.Type.Number do
 
   alias Masonree.Type
 
-  # @impl Type
-  @doc "Returns whether `:number` may be declared with `payload`."
-  @spec declarable?(Type.payload()) :: boolean()
-  def declarable?(payload), do: is_nil(payload)
-
   @impl Type
   def admits?(_payload, value), do: is_number(value)
+
+  @impl Type
+  def declarable?(payload), do: is_nil(payload)
 end

@@ -14,11 +14,9 @@ defmodule Masonree.Type.Boolean do
 
   alias Masonree.Type
 
-  # @impl Type
-  @doc "Returns whether `:boolean` may be declared with `payload`."
-  @spec declarable?(Type.payload()) :: boolean()
-  def declarable?(payload), do: is_nil(payload)
-
   @impl Type
   def admits?(_payload, value), do: is_boolean(value)
+
+  @impl Type
+  def declarable?(payload), do: is_nil(payload)
 end

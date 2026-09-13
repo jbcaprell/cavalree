@@ -8,12 +8,10 @@ defmodule Masonree.Type.Enum do
 
   alias Masonree.Type
 
-  # @impl Type
-  @doc "Returns whether `:enum` may be declared with `payload`."
-  @spec declarable?(Type.payload()) :: boolean()
-  def declarable?(payload), do: is_list(payload)
-
   @impl Type
   def admits?(payload, value) when is_list(payload), do: value in payload
   def admits?(_payload, _value), do: false
+
+  @impl Type
+  def declarable?(payload), do: is_list(payload)
 end
