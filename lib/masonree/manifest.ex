@@ -76,6 +76,7 @@ defmodule Masonree.Manifest do
           | {:empty_enum, name(), key()}
           | {:non_string_keys, name()}
           | {:required_with_default, name(), key()}
+          | {:undeclared_role, name(), key()}
           | {:unnamespaced_name, name()}
 
   @typedoc "Represents every rejection found."
@@ -101,6 +102,7 @@ defmodule Masonree.Manifest do
 
   @key ~r"\A[^[:space:][:cntrl:]]+\z"u
   @name ~r"\A[a-z][a-z0-9-]*/[a-z][a-z0-9-]*\z"
+  @roles ~W[chrome content]a
 
   @doc """
   Returns the namespace of `name`, or `nil` where it carries none.
@@ -354,6 +356,38 @@ defmodule Masonree.Manifest do
   end
 
   @doc """
+  Returns a rejection for each of `manifest`’s attributes with no declared role.
+
+  Every attribute is one or the other — what the page says, or how it presents —
+  and the choice is the author’s, because nothing mechanical can tell a headline
+  from a layout flag. The struct cannot enforce it: the lock that reads the
+  field is declared by a container, and the attributes it freezes belong to that
+  container’s children, so the precondition can never be checked where its
+  consumer is written and is checked here instead, on every attribute of every
+  block. A `nil` is refused exactly as a misspelling is — absence and a wrong
+  answer are the same failure to choose.
+
+  ## Example
+
+      iex> manifest = %Manifest{
+      ...>   attributes: %{"content" => %Attribute{type: :string}},
+      ...>   name: "test/example",
+      ...>   version: 1
+      ...> }
+      iex>
+      iex> validate_roles(manifest)
+      [{:undeclared_role, "test/example", "content"}]
+
+  """
+  @doc since: "0.5.0"
+  @spec validate_roles(t()) :: problems()
+  def validate_roles(%__MODULE__{attributes: attributes, name: name}) do
+    attributes
+    |> take_attributes(&role_undeclared?/1)
+    |> report_attributes(name, :undeclared_role)
+  end
+
+  @doc """
   Returns a rejection for each of `manifest`’s scalars with a refused default.
 
   A default is a stored value waiting to happen, so it is judged exactly as a
@@ -509,6 +543,9 @@ defmodule Masonree.Manifest do
   @spec required_with_default?(Attribute.t()) :: boolean()
   defp required_with_default?(%Attribute{default: nil}), do: false
   defp required_with_default?(%Attribute{required: required}), do: required
+
+  @spec role_undeclared?(Attribute.t()) :: boolean()
+  defp role_undeclared?(%Attribute{role: role}), do: role not in @roles
 
   @spec take_attributes(attributes(), predicate()) :: [declaration()]
   defp take_attributes(attributes, predicate) do
