@@ -8,5 +8,11 @@ defmodule MasonreeBench.RepoTest do
 
   alias MasonreeBench.Repo
 
-  doctest Repo, import: true
+  describe "Repo" do
+    test "declares itself an Ecto.Repo, so a test may reach a real column" do
+      attributes = Repo.__info__(:attributes)
+
+      assert attributes[:behaviour] == [Ecto.Repo]
+    end
+  end
 end
