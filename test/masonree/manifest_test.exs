@@ -8,9 +8,23 @@ defmodule Masonree.ManifestTest do
 
   alias Masonree.Manifest
 
+  alias Manifest.Attribute
+
   doctest Manifest, import: true
 
   describe "%Manifest{}" do
+    test "carries a declared attribute" do
+      manifest = %Manifest{
+        attributes: %{
+          "content" => attribute = %Attribute{default: "", type: :string}
+        },
+        name: "test/example",
+        version: 1
+      }
+
+      assert manifest.attributes["content"] == attribute
+    end
+
     test "defaults every field it does not enforce to nothing" do
       manifest = %Manifest{name: "test/example", version: 1}
 
