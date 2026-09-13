@@ -67,6 +67,29 @@ defmodule Masonree.TypeTest do
     end
   end
 
+  describe "declarable?/1" do
+    import Type, only: [declarable?: 1]
+
+    test "puts the declaration to the member" do
+      assert declarable?(:string)
+      assert declarable?({:enum, []})
+      refute declarable?({:string, []})
+      refute declarable?({:enum, nil})
+    end
+
+    test "refuses a type the lattice does not hold" do
+      refute declarable?(:bool)
+      refute declarable?({:choice, []})
+      refute declarable?("boolean")
+    end
+
+    test "refuses an explicit nil payload, which the bare form is not" do
+      refute declarable?({:boolean, nil})
+      refute declarable?({:number, nil})
+      refute declarable?({:string, nil})
+    end
+  end
+
   describe "list_tags/0" do
     import Type, only: [list_tags: 0]
 

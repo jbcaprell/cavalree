@@ -13,7 +13,9 @@ defmodule Masonree.Type do
 
   The lattice is asked `admits?/2` with a type and a value; it resolves the type
   to a member and asks that member `c:admits?/2`, handing it the payload the
-  type carried and the same value.
+  type carried and the same value. It is asked `declarable?/1` with a type
+  alone, before any value exists, and resolves it the same way — a type that
+  resolves to no member is not declarable, and admits nothing.
 
   A `nil` payload is refused before any member is asked. A member reads
   `{:boolean, nil}` exactly as it reads the bare `:boolean`, so no member can
@@ -26,6 +28,10 @@ defmodule Masonree.Type do
   alias Masonree
 
   alias Masonree.Type
+
+  @typedoc "Represents a type as a manifest declares it, before it is judged."
+  @typedoc since: "0.5.0"
+  @type declaration() :: term()
 
   @typedoc "Represents the payload a member is declared with."
   @typedoc since: "0.3.0"
@@ -93,6 +99,42 @@ defmodule Masonree.Type do
   def admits?(type, value) do
     case resolve(type) do
       {module, payload} -> module.admits?(payload, value)
+      :error -> false
+    end
+  end
+
+  @doc """
+  Returns whether `type` may be declared at all.
+
+  A different question from `admits?/2`, asked at a different moment: this one
+  judges the declaration a block author wrote, before any value exists. A scalar
+  member is declarable bare and only bare — `{:boolean, []}` carries a payload
+  where none belongs — and an enum is declarable exactly when its payload is a
+  list. What a well-shaped payload must contain is not answered here: whether
+  an enum’s list is empty, or repeats itself, is a rule about a usable
+  declaration rather than a legible one, and it belongs to the module that
+  judges declarations.
+
+  ## Examples
+
+      iex> declarable?(:boolean)
+      true
+
+      iex> declarable?({:boolean, []})
+      false
+
+      iex> declarable?({:enum, ["dark", "light"]})
+      true
+
+      iex> declarable?(:bool)
+      false
+
+  """
+  @doc since: "0.5.0"
+  @spec declarable?(declaration()) :: boolean()
+  def declarable?(type) do
+    case resolve(type) do
+      {module, payload} -> module.declarable?(payload)
       :error -> false
     end
   end
