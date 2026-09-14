@@ -265,8 +265,8 @@
   phoenix: {
     :hex,
     :phoenix,
-    "1.8.13",
-    "e33192826d9bed4022bdb3f5a7b36c04362049d9390fd1b581d5ad6261779268",
+    "1.8.14",
+    "9279cbbcd755ac8d5f42d206915e7df13b9ab49096b98114f1c99ff908e5b42e",
     [:mix],
     [
       {:bandit, "~> 1.0", hex: :bandit, repo: "hexpm", optional: true},
@@ -309,7 +309,7 @@
       }
     ],
     "hexpm",
-    "ad14e24d10e5a52d5f80429053bbe3a5d124311a2868fceb0a01a2e859c44539"
+    "2782ff375824b2b5e41561fbae4764ee7b875af6898483bca49f24a9d1e37816"
   },
   phoenix_html: {
     :hex,
