@@ -38,7 +38,7 @@ defmodule Cavalree.MixProject do
   ## Example
 
       iex> project()[:app]
-      :masonree
+      :cavalree
 
   """
   @doc since: "0.1.0"
