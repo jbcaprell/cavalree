@@ -88,11 +88,12 @@ defmodule Masonree.Envelope do
   the column that the model has not seen.
 
   It does not validate content. A document holding an attribute no manifest
-  declares goes into the column as it stands, and nothing in this library judges
-  that yet in any case. An editor saves work that is half-done by construction,
-  and a writer that refused it would make the database the place a draft goes to
-  be rejected. Validation is a decision about whether to accept an edit, taken
-  where the edit arrives; storage is a decision about bytes.
+  declares goes into the column as it stands; `Masonree.Conformance` is where
+  that is judged, and a caller who wants it judged asks there. An editor saves
+  work that is half-done by construction, and a writer that refused it would
+  make the database the place a draft goes to be rejected. Validation is a
+  decision about whether to accept an edit, taken where the edit arrives;
+  storage is a decision about bytes.
 
   It does refuse what the reader would refuse. Those are different questions:
   the first is about whether a document is good, the second about whether it
