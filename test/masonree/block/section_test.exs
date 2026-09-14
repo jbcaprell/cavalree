@@ -13,6 +13,8 @@ defmodule Masonree.Block.SectionTest do
   alias Manifest.Containment
   alias Manifest.Template
 
+  doctest Block.Section, import: true
+
   @spec to_markup(Block.projection()) :: String.t()
   defp to_markup({rendered, _reports}) do
     rendered
