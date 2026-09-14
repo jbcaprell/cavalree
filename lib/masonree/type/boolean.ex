@@ -14,19 +14,12 @@ defmodule Masonree.Type.Boolean do
 
   alias Masonree.Type
 
-  @typep default() :: Type.default()
-  @typep healing() :: Type.healing()
-  @typep payload() :: Type.payload()
-  @typep value() :: Type.value()
-
-  # @impl Type
-  @doc "Returns the repair of `value` toward `default`, given `payload`."
-  @spec heal(payload(), value(), default()) :: healing()
-  def heal(_payload, _value, _default), do: :refused
-
   @impl Type
   def admits?(_payload, value), do: is_boolean(value)
 
   @impl Type
   def declarable?(payload), do: is_nil(payload)
+
+  @impl Type
+  def heal(_payload, _value, _default), do: :refused
 end
