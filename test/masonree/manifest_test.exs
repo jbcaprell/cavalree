@@ -9,10 +9,23 @@ defmodule Masonree.ManifestTest do
   alias Masonree.Manifest
 
   alias Manifest.Attribute
+  alias Manifest.Containment
 
   doctest Manifest, import: true
 
   describe "%Manifest{}" do
+    test "carries a containment where the block declares one" do
+      containment = %Containment{minimum: 1}
+
+      manifest = %Manifest{
+        containment: containment,
+        name: "test/example",
+        version: 1
+      }
+
+      assert manifest.containment == containment
+    end
+
     test "carries a declared attribute" do
       manifest = %Manifest{
         attributes: %{
@@ -79,6 +92,19 @@ defmodule Masonree.ManifestTest do
       }
 
       assert validate(manifest) == []
+    end
+
+    test "reports an ill-keyed manifest’s key as it was found" do
+      manifest = %Manifest{
+        attributes: %{content: %Attribute{role: :content, type: :bool}},
+        name: "test/example",
+        version: 1
+      }
+
+      assert validate(manifest) == [
+               {:non_string_keys, "test/example"},
+               {:bad_attribute_type, "test/example", :content}
+             ]
     end
 
     test "reports every fault in one pass, not the first it meets" do
