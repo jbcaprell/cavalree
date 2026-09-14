@@ -219,19 +219,7 @@ defmodule Masonree.Manifest do
   @doc since: "0.5.0"
   @spec validate(t()) :: problems()
   def validate(manifest) when is_struct(manifest, __MODULE__) do
-    reports = [
-      validate_defaults(manifest),
-      validate_duplicates(manifest),
-      validate_enums(manifest),
-      validate_format(manifest),
-      validate_keys(manifest),
-      validate_name(manifest),
-      validate_requiredness(manifest),
-      validate_roles(manifest),
-      validate_scalars(manifest),
-      validate_types(manifest),
-      validate_version(manifest)
-    ]
+    reports = [validate_declaration(manifest), validate_interior(manifest)]
 
     reports
     |> Enum.concat()
@@ -900,4 +888,36 @@ defmodule Masonree.Manifest do
   end
 
   defp unfillable_interior?(_containment), do: false
+
+  @spec validate_declaration(t()) :: problems()
+  defp validate_declaration(manifest) do
+    reports = [
+      validate_defaults(manifest),
+      validate_duplicates(manifest),
+      validate_enums(manifest),
+      validate_format(manifest),
+      validate_keys(manifest),
+      validate_name(manifest),
+      validate_requiredness(manifest),
+      validate_roles(manifest),
+      validate_scalars(manifest),
+      validate_types(manifest),
+      validate_version(manifest)
+    ]
+
+    Enum.concat(reports)
+  end
+
+  @spec validate_interior(t()) :: problems()
+  defp validate_interior(manifest) do
+    reports = [
+      validate_admission(manifest),
+      validate_cardinality(manifest),
+      validate_fillability(manifest),
+      validate_startability(manifest),
+      validate_templates(manifest)
+    ]
+
+    Enum.concat(reports)
+  end
 end
