@@ -33,6 +33,14 @@ defmodule Masonree.Type do
   @typedoc since: "0.5.0"
   @type declaration() :: term()
 
+  @typedoc "Represents what a healing moves toward: the declared default."
+  @typedoc since: "0.8.0"
+  @type default() :: term()
+
+  @typedoc "Represents a member’s answer about a value it refused."
+  @typedoc since: "0.8.0"
+  @type healing() :: :refused | {:coerced, default()} | {:sanitized, value()}
+
   @typedoc "Represents the payload a member is declared with."
   @typedoc since: "0.3.0"
   @type payload() :: term()
