@@ -62,9 +62,13 @@ defmodule Masonree.Reconciliation do
   @typedoc since: "0.8.0"
   @type problems() :: [problem()]
 
+  @typedoc "Represents one repair owed: a mode, a key and a healed value."
+  @typedoc since: "0.8.0"
+  @type repair() :: {:coerced, key(), value()}
+
   @typedoc "Represents every repair owed, by declaration order."
   @typedoc since: "0.8.0"
-  @type repairs() :: [{:coerced, key(), value()}]
+  @type repairs() :: [repair()]
 
   @typedoc "Represents anything a node’s attribute map can hold, key or value."
   @typedoc since: "0.8.0"
@@ -304,6 +308,37 @@ defmodule Masonree.Reconciliation do
         {mode, healed} <- [Type.heal(type, value, default)] do
       {mode, key, healed}
     end
+  end
+
+  @doc """
+  Returns `attributes` with one repair written at the key it names.
+
+  A healed value of `nil` deletes the key rather than storing it: a declared
+  default of `nil` is an attribute with no default at all, so a value coerced
+  toward one is a key removed rather than a key holding `nil` — absence is what
+  the manifest said, a stored `nil` is a lie a block would read as an answer,
+  and the absence is exactly what `Masonree.Conformance` reports where it
+  matters. Any other healed value replaces what was held. The mode rides along
+  for the reporter and changes nothing about the write.
+
+  ## Example
+
+      iex> write_repair(%{"tag" => "h9"}, {:coerced, "tag", nil})
+      %{}
+
+  """
+  @doc since: "0.8.0"
+  @spec write_repair(attributes(), repair()) :: attributes()
+  def write_repair(attributes, repair)
+
+  def write_repair(attributes, {_mode, key, nil})
+      when is_map(attributes) and is_binary(key) do
+    Map.delete(attributes, key)
+  end
+
+  def write_repair(attributes, {_mode, key, healed})
+      when is_map(attributes) and is_binary(key) do
+    Map.put(attributes, key, healed)
   end
 
   @spec unrepresentable?({term(), term()}) :: boolean()
