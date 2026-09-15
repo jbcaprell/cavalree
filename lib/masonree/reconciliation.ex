@@ -17,11 +17,41 @@ defmodule Masonree.Reconciliation do
   the manifests’; and what the database can represent is this module’s own first
   question, because `jsonb` restrings some shapes and refuses one, and the write
   boundary is the last place to say so before it happens.
+
+  ## Example
+
+      iex> document = %Document{
+      ...>   root: [
+      ...>     %Node{
+      ...>       attributes: %{"level" => 2},
+      ...>       id: "n_H2ntjK9tYnhL",
+      ...>       type: "test/example",
+      ...>       version: 1
+      ...>     }
+      ...>   ]
+      ...> }
+      iex>
+      iex> manifests = %{
+      ...>   "test/example" => %Manifest{
+      ...>     attributes: %{
+      ...>       "content" => %Attribute{default: "", type: :string}
+      ...>     },
+      ...>     name: "test/example",
+      ...>     version: 1
+      ...>   }
+      ...> }
+      iex>
+      iex> {healed, problems} = normalize(document, manifests)
+      iex> [node] = healed.root
+      iex> {node.attributes, problems}
+      {%{"content" => ""}, [{:dropped_attribute, "n_H2ntjK9tYnhL", "level"}]}
+
   """
   @moduledoc since: "0.8.0"
 
   alias Masonree
 
+  alias Masonree.Document
   alias Masonree.Manifest
   alias Masonree.Node
   alias Masonree.Type
@@ -44,6 +74,10 @@ defmodule Masonree.Reconciliation do
   @typedoc since: "0.8.0"
   @type default() :: Type.default()
 
+  @typedoc "Represents the document under repair."
+  @typedoc since: "0.8.0"
+  @type document() :: Document.t()
+
   @typedoc "Represents the id of the node a repair names."
   @typedoc since: "0.8.0"
   @type id() :: Node.id()
@@ -52,10 +86,23 @@ defmodule Masonree.Reconciliation do
   @typedoc since: "0.8.0"
   @type key() :: Manifest.key()
 
+  @typedoc "Represents the manifests consulted, by block name."
+  @typedoc since: "0.8.0"
+  @type manifests() :: %{Manifest.name() => Manifest.t()}
+
+  @typedoc "Represents how a member repaired a value it refused."
+  @typedoc since: "0.8.0"
+  @type mode() :: :coerced
+
+  @typedoc "Represents the healed document, and what the healing cost."
+  @typedoc since: "0.8.0"
+  @type normalization() :: {document(), problems()}
+
   @typedoc "Represents one finding: what a repair took, or could not store."
   @typedoc since: "0.8.0"
   @type problem() ::
-          {:dropped_attribute, id(), key()}
+          {:coerced_attribute, id(), key()}
+          | {:dropped_attribute, id(), key()}
           | {:unrepresentable_attribute, id(), term()}
 
   @typedoc "Represents every finding, in document order."
@@ -64,7 +111,7 @@ defmodule Masonree.Reconciliation do
 
   @typedoc "Represents one repair owed: a mode, a key and a healed value."
   @typedoc since: "0.8.0"
-  @type repair() :: {:coerced, key(), value()}
+  @type repair() :: {mode(), key(), value()}
 
   @typedoc "Represents every repair owed, by declaration order."
   @typedoc since: "0.8.0"
@@ -73,6 +120,8 @@ defmodule Masonree.Reconciliation do
   @typedoc "Represents anything a node’s attribute map can hold, key or value."
   @typedoc since: "0.8.0"
   @type value() :: Type.value()
+
+  @typep healing() :: {attributes(), problems()}
 
   @doc """
   Returns `attributes` with every default `declarations` names filled in.
@@ -103,6 +152,71 @@ defmodule Masonree.Reconciliation do
     end
 
     Enum.reduce(declarations, attributes, fill)
+  end
+
+  @doc """
+  Returns `document` healed for storage against `manifests`, and what it cost.
+
+  Per node whose block `manifests` names: every key no declaration explains is
+  removed and reported; every declared default fills in where its key is absent,
+  a held value never overwritten; and every held value the declared type refuses
+  is put to its member, the repairs written and reported, a healed `nil`
+  deleting its key. A node whose block is unknown is preserved exactly as it
+  stands — healing against a manifest that is not there would be invention — and
+  what the database cannot represent is reported off the healed node, because
+  the hazard is what the write will hold.
+
+  A repair reports by the mode its member chose: `:coerced_attribute` where the
+  declared default replaced the value. That is the only class, because
+  `:coerced` is the only mode a member can answer with — the lattice declares a
+  third healing, `{:sanitized, value}`, that nothing produces yet. The mode is
+  the member’s answer, and the member that answers it brings the class with it.
+
+  A refused value stands unchanged and unreported here: what a member cannot
+  repair is not this module’s loss to claim, and naming the fault is
+  `Masonree.Conformance`’s work.
+
+  Reports arrive sorted per node, in document order across nodes, and the
+  healing is idempotent: normalizing a normalized document changes nothing,
+  though unrepresentable reports repeat until their shapes are fixed at the
+  source.
+
+  ## Example
+
+      iex> document = %Document{
+      ...>   root: [
+      ...>     %Node{
+      ...>       attributes: %{"tag" => "h9"},
+      ...>       id: "n_2clYo0zGjbcx",
+      ...>       type: "test/example",
+      ...>       version: 1
+      ...>     }
+      ...>   ]
+      ...> }
+      iex>
+      iex> manifests = %{
+      ...>   "test/example" => %Manifest{
+      ...>     attributes: %{
+      ...>       "tag" => %Attribute{default: "h2", type: {:enum, ["h2", "h3"]}}
+      ...>     },
+      ...>     name: "test/example",
+      ...>     version: 1
+      ...>   }
+      ...> }
+      iex>
+      iex> {healed, problems} = normalize(document, manifests)
+      iex> [node] = healed.root
+      iex> {node.attributes, problems}
+      {%{"tag" => "h2"}, [{:coerced_attribute, "n_2clYo0zGjbcx", "tag"}]}
+
+  """
+  @doc since: "0.8.0"
+  @spec normalize(document(), manifests()) :: normalization()
+  def normalize(document, manifests)
+      when is_struct(document, Document) and is_map(manifests) do
+    {root, problems} = heal_list(document.root, manifests)
+
+    {%Document{document | root: root}, problems}
   end
 
   @doc """
@@ -340,6 +454,61 @@ defmodule Masonree.Reconciliation do
       when is_map(attributes) and is_binary(key) do
     Map.put(attributes, key, healed)
   end
+
+  @spec heal(block_node(), manifests()) :: {block_node(), problems()}
+  defp heal(node, manifests) do
+    manifest = Map.get(manifests, node.type)
+    {attributes, repaired} = heal_attributes(node, manifest)
+    {children, nested} = heal_list(node.children, manifests)
+    healed = %Node{node | attributes: attributes, children: children}
+    unrepresentable = report_unrepresentable(healed)
+    reports = Enum.sort(repaired ++ unrepresentable)
+
+    {healed, reports ++ nested}
+  end
+
+  @spec heal_attributes(block_node(), nil | Manifest.t()) :: healing()
+  defp heal_attributes(%Node{attributes: attributes}, nil) do
+    {attributes, []}
+  end
+
+  defp heal_attributes(node, %Manifest{attributes: declared}) do
+    {healed, repairs} =
+      node.attributes
+      |> take_declared(declared)
+      |> fill_defaults(declared)
+      |> heal_values(declared, node.id)
+
+    {healed, report_dropped(node, declared) ++ repairs}
+  end
+
+  @spec heal_list([Node.t()], manifests()) :: {[Node.t()], problems()}
+  defp heal_list(nodes, manifests) do
+    step = fn node, acc ->
+      {healed, found} = heal(node, manifests)
+
+      {healed, acc ++ found}
+    end
+
+    Enum.map_reduce(nodes, [], step)
+  end
+
+  @spec heal_values(attributes(), declarations(), id()) :: healing()
+  defp heal_values(attributes, declared, id) do
+    repairs = take_repairs(attributes, declared)
+    reports = report_repairs(repairs, id)
+    write = fn repair, acc -> write_repair(acc, repair) end
+
+    {Enum.reduce(repairs, attributes, write), reports}
+  end
+
+  @spec report_repairs(repairs(), id()) :: problems()
+  defp report_repairs(repairs, id) do
+    for {mode, key, _value} <- repairs, do: {take_class(mode), id, key}
+  end
+
+  @spec take_class(mode()) :: :coerced_attribute
+  defp take_class(:coerced), do: :coerced_attribute
 
   @spec unrepresentable?({term(), term()}) :: boolean()
   defp unrepresentable?({key, value}) do
