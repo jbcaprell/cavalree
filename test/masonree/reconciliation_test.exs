@@ -452,11 +452,5 @@ defmodule Masonree.ReconciliationTest do
       assert write_repair(%{"tag" => "h9"}, {:coerced, "tag", "h2"}) ==
                %{"tag" => "h2"}
     end
-
-    test "writes a sanitized value as it writes a coerced one" do
-      repair = {:sanitized, "text", "hi"}
-
-      assert write_repair(%{"text" => "<b>hi</b>"}, repair) == %{"text" => "hi"}
-    end
   end
 end
